@@ -1,0 +1,17 @@
+# Normalize text files on commit so the repository stays diff-friendly across platforms.
+* text=auto eol=lf
+
+# Batch files must keep CRLF: cmd.exe parses multi-line ( ) blocks and labels
+# unreliably when they are LF-only.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary-ish assets are never normalized.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.exe binary
+*.dll binary

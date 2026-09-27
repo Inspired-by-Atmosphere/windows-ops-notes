@@ -1,0 +1,17 @@
+# No third-party Python packages are required.
+#
+# Every script under scripts/ uses the Python standard library only, so there is
+# nothing to install. Tools invoked as external commands are deliberately NOT
+# listed here - they are OS-supplied or optional, and each script degrades
+# gracefully when one is missing:
+#
+#   powershell.exe  Windows 10/11 built-in (PowerShell 5.1+)
+#                   used by: catch_popup.py, watch_popups.py, memcheck.py,
+#                            read_visible_windows.ps1
+#   nvidia-smi      optional, ships with the NVIDIA driver; the GPU section of
+#                   memcheck.py is skipped when it is absent
+#   pnputil         optional, Windows built-in; used by scripts/gpu-power-mode/*.bat
+#   mysql / mysqld  optional, only for the no-admin MySQL workflow in
+#                   notes/windows-apps/software-deploy-no-admin.md
+#
+# Python: 3.8+ (no dependencies beyond the standard library).
