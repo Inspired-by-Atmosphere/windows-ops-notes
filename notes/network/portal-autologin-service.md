@@ -14,8 +14,8 @@
 
 ## 现场事实（Example University · main campus · campus broadband）
 
-- 宿舍出口 = **a soft-router (OpenWrt-based)**（ImmortalWrt，`192.168.1.1`）：做 portal 认证 + NAT 分网。旧中兴 the old router 已于 日期已脱敏 退役丢弃，但其 WAN MAC `AA:BB:CC:DD:EE:02` 被**克隆沿用**（校园网按 MAC 放行，换机必须沿用）。校园网是**一账号一设备**，路由器就是那"一台设备"。
-- 认证平台 = **锐捷新一代 Portal/ePortal + 统一身份认证（LinkID 系 SSO）**：
+- 宿舍出口 = **a soft-router (OpenWrt-based)**（ImmortalWrt，`192.168.1.1`）：做 portal 认证 + NAT 分网。旧的 ISP 光猫 the old router 已于 日期已脱敏 退役丢弃，但其 WAN MAC `AA:BB:CC:DD:EE:02` 被**克隆沿用**（校园网按 MAC 放行，换机必须沿用）。校园网是**一账号一设备**，路由器就是那"一台设备"。
+- 认证平台 = **厂商 Portal/ePortal + 统一身份认证 SSO**：
   - 门户/自服务 `http://10.0.0.254/`（SPA，Angular）；自服务首页 `/self/index`；设备页 `/self/my-devices`（显示在线设备 MAC/IP/无感状态，含「下线」「注册无感/关闭无感」按钮）。
   - SSO 登录页 `http://10.0.0.254/pc/center?service=...`（`#nameInput` + `input[type=password]` + 隐私复选框 + 「立即登录」）。
   - SSO 服务器名：`/sam-sso/api/sso/server/name` → `http://10.0.0.254/cas-sso`。
@@ -59,14 +59,14 @@ sudo systemctl disable --now campus-autologin.timer   # 停用
 ## 坑位
 
 - **别反复试密码**：SSO 失败会弹 `captcha_code` 验证码字段，脚本随即失效；路由器（the old router）3 次登录失败会锁 30~60 秒。
-- the old router 超管口令：`CMCCAdmin/aDm8H%MdA`、`CMCCAdmin/CMCCAdminWoTf6&$7`、`useradmin/useradmin` 均**实测失败**（移动装维已改）；后可试标签上的普通用户口令，或 ZTE 免密路径（`/cgi-bin/telnetenable.cgi?telnetenable=1&key=<MAC大写无分隔>` → telnet root/`Fh@<MAC后6位>` → `sendcmd 1 DB p DevAuthInfo`）。
+- the old router 的**出厂默认超管账号**：那几组厂商默认口令（此处不记录具体值）**实测均失败**——装维已经把默认值改掉了。剩下的只有两条不需要凭据的线索：机身标签上的普通用户口令（由用户本人试），或该品牌光猫的**免密开 telnet 路径**（`/cgi-bin/telnetenable.cgi?telnetenable=1&key=<MAC大写无分隔>`）→ telnet `root` + 厂商默认口令格式（固定前缀 + MAC 后 6 位，具体前缀不在本仓库记录）→ `sendcmd 1 DB p DevAuthInfo` 读回账号信息。**明文口令一律不写进任何文档或脚本。**
 - 小服务器没有 chromium 包但有 **google-chrome-stable** → Playwright 用 `channel='chrome'`，别 `playwright install chromium`（省 150MB 下载）。
 - 登录页/门户页会拦截 http 请求做重定向：探测外网时要判 `10.0.0.254` 出现在最终 URL = 未认证。
 - 通知可选：脚本读 `CHAT_BRIDGE_HTTP`/`CHAT_BRIDGE_TOKEN`/`CHAT_BRIDGE_TARGET` 环境变量走 chat-bridge `send_private_msg`；未配置只写日志。
 
 ## 为什么"自助中心里开了无感，照样掉线"（日期已脱敏 机理定案草案）
 
-- **无感 = MAB = 认证服务器记住"这个 MAC 归这个账号"，它不等于会话永续。** 在线会话仍归平台侧定时器管：H3C Portal 缺省 `idle=180s`（闲置 3 分钟无该 MAC 报文就发 ARP/ICMP 探测，`interval=3s`、`retry=3`，不应答即强制下线），另有 `offline-detect=300s`。
+- **无感 = MAB = 认证服务器记住"这个 MAC 归这个账号"，它不等于会话永续。** 在线会话仍归平台侧定时器管：企业级 Portal 平台缺省 `idle=180s`（闲置 3 分钟无该 MAC 报文就发 ARP/ICMP 探测，`interval=3s`、`retry=3`，不应答即强制下线），另有 `offline-detect=300s`。
 - 路由器是 NAT 网关，**内网设备流量对校园网是"被转发"，路由器自己可能长时间不发包** → 被判闲置 → 会话被收走；**会话被收走后 MAB 不会自己把会话拉回来**（MAB 只在链路/端口事件或新的认证触发时才生效）→ 表面上就是"无感开了也没用"。
 - 现场对照：探测间隔从 3 分钟改到 1 分钟后，链路连续在线 60+ 分钟无掉线（此前 3 分钟档在 22:33 掉过一次）。**强相关，尚待整夜日志定论**——所以要靠 1 分钟保活 + 看门狗兜底双保险，别只靠其中一个。
 - 自助中心 `/self/my-devices` 页可直接看到"无感"是否开着、绑的哪个 MAC、在线时长、最近上线时间——排查无感问题先看这一页，别再猜。

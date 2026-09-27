@@ -20,7 +20,7 @@
 - **内置独显**: NVIDIA GeForce RTX 5060 Laptop 8GB（bus 01:00.0，SUBSYS 3F9617AA=<laptop OEM>）
 - **外接 eGPU**: NVIDIA GeForce RTX 3070 **16GB**（bus 0F:00.0，SUBSYS 40691458=技嘉，DEV_2484=2025 新版 16GB SKU）
 - **存储**: 系统盘 C: Lexar NM610PRO 500GB NVMe（曾仅剩 35GB）；数据盘 D:+E: 忆联 UMIS 1TB 分两区
-- **网络**: 有线 Intel I219-V；蓝牙 Intel Wireless（MAC AA:BB:CC:DD:EE:02）；虚拟网卡=深信服VPN/Tailscale/Meta Tunnel(Clash)；⚠️WiFi 适配器未枚举到（疑禁用）
+- **网络**: 有线 Intel I219-V；蓝牙 Intel Wireless（MAC AA:BB:CC:DD:EE:02）；虚拟网卡=a corporate SSL-VPN client/Tailscale/Meta Tunnel(Clash)；⚠️WiFi 适配器未枚举到（疑禁用）
 - **音频**: Realtek HDA(SST) + NVIDIA HD Audio×2 + Intel 智音；虚拟：NVIDIA/iTop/网易虚拟音频
 - **虚拟显示**: 向日葵(Oray)/AskLink/GameViewer/Todesk 四个远程虚拟显卡
 - **蓝牙外设**: inphic S6 鼠标、zdeer G4 键盘、左护卫设备
