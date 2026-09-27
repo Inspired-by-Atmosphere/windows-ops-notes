@@ -36,8 +36,9 @@ were not kept per item); the action column describes what the placeholder stands
 
 | Category | Count | Action |
 |---|---|---|
+| Credentials (vendor defaults) | 1 line | Literal factory-default router credentials (several account/password pairs plus a derived default password pattern) removed; only the *method* of obtaining access is kept, and no value is recorded anywhere |
 | Private network addresses | 2 | Two remaining real private addresses (default-bridge-style, from a service bundle) replaced with the `10.0.0.x` documentation range |
-| Device vendor / model name | 1 | A router vendor brand name removed; the generic platform description was kept |
+| Device vendor / model / platform names | 6 | Router vendor, portal-platform vendor (including its SSO product name) and a corporate SSL-VPN product name replaced with generic descriptions; hardware vendor facts that carry the diagnosis were kept |
 | Messaging-channel product name | 1 | A consumer chat-product name replaced with the neutral term "instant-messaging channel" |
 | Internal project directory name | 1 (2 occurrences) | An in-house project directory name in a path example replaced with a generic example path |
 | Broken replacement artefact | 1 | A bullet that had been over-replaced into three identical placeholder directory names was rewritten as a plain description |
