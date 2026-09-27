@@ -37,6 +37,8 @@ import urllib.request
 GALLERY = "https://marketplace.visualstudio.com/_apis/public/gallery"
 QUERY_URL = GALLERY + "/extensionquery"
 FLAGS_ALL_VERSIONS = 439  # 0x1B7 - never use 951 (it adds IncludeLatestVersionOnly)
+# Lookup order: PATH first, then the usual per-machine install locations.
+# Add or trim entries to match your own setup - the D:/ entry is an example.
 CODE_CANDIDATES = [
     "code",
     "code.cmd",
