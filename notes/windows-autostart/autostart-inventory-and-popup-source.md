@@ -45,7 +45,7 @@ powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object {$_
 ```bash
 # ① 用户 + 公共 启动文件夹
 ls -la "$APPDATA/Microsoft/Windows/Start Menu/Programs/Startup"
-ls -la "/c/ProgramData/Microsoft/Windows/Start Menu/Programs/Startup"
+ls -la "$ProgramData/Microsoft/Windows/Start Menu/Programs/Startup"
 
 # ② 注册表 Run 键
 reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run"
@@ -123,7 +123,7 @@ netstat -ano | grep ":6700"
 ## 坑位
 
 1. **"重启后恢复应用"功能**（用户级，默认开）：关机时开着的程序（如 the desktop app）会在下次登录被 explorer 自动拉起，**不在任何启动列表里**，改启动项没用。注册表 `HKCU\...\Explorer\Advanced\Start_TrackProgAndDesktop`（空=默认启用）。关闭命令：`reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v Start_TrackProgAndDesktop /t REG_DWORD /d 0 /f`。⚠️副作用：所有"上次开着"的程序都不会自动恢复了（浏览器/常用应用等），先跟用户说清。
-2. **`.bat` 改静默**：不要试图在 bat 里藏窗口，直接改写成 `.vbs`（照抄已有 vbs 写法）：`Set ws=CreateObject("WScript.Shell"): ws.Run "命令", 0, False`。本机已有大量 vbs 范本可抄。写好后用 Windows 原生路径验证：`cscript //nologo "C:\...\x.vbs"`（⚠️ 传 MSYS 路径如 `/c/...` 会被当参数报"未知选项"，必须用 `C:\` 全路径）。
+2. **`.bat` 改静默**：不要试图在 bat 里藏窗口，直接改写成 `.vbs`（照抄已有 vbs 写法）：`Set ws=CreateObject("WScript.Shell"): ws.Run "命令", 0, False`。本机已有大量 vbs 范本可抄。写好后用 Windows 原生路径验证：`cscript //nologo "<盘符>:\...\x.vbs"`（⚠️ 传 MSYS 盘符根路径（`/<盘符>/...`）会被当参数报"未知选项"，必须用 `<盘符>:\...` 这类原生全路径）。
 3. **schtasks/grep 中文输出乱码**：用 `Get-ScheduledTask` 而非 `schtasks` 管道 grep；`Get-CimInstance Win32_StartupCommand` 可直接拿中文名。
 4. **git-bash 里 `taskkill //F` 无效**（MSYS 转义吃参数报"无效参数/选项"）：用 `powershell Stop-Process -Id <pid> -Force` 或 `taskkill /F`（单斜杠+引号规避）代替。
 5. **计划任务手动触发**：`Start-ScheduledTask -TaskName 'X'`（PowerShell），触发后 gateway 常为"父启动器 spawn 子进程"形态，等 8-15 秒再验证端口/状态文件。
@@ -137,7 +137,7 @@ netstat -ano | grep ":6700"
    - 先备份：`cp config.yaml backups/<日期>/`。
    - 移除后旧进程仍残留，等 gateway/serve 重启自然收敛（或手动 Stop-Process 止血）。
    - ⚠️ **改 config 后运行中的 gateway/serve 不重读**——持有内存旧配置继续拉 MCP server。必须重启 gateway（计划任务拉起，闪断几秒即时消息）才生效；serve 重启会中断当前桌面对话，慎做。
-8. **Dock 启动器拉起控制台程序 ≠ 恢复应用功能**：桌面版若父进程是 Winstep Nexus（`%USERPROFILE%\Winstep\Nexus.exe autostart`）而非 explorer，那是 **dock 项**自启，不是 Windows 恢复功能。关 Start_TrackProgAndDesktop 对它无效！（实测：关掉恢复功能后桌面版仍被 Nexus 拉起——根因是 Nexus dock 项 `1Path12=app.exe`）。Nexus dock 项存注册表 `HKCU\Software\WinSTEP2000\NeXuS\Docks`（键 `1PathN`/`1IconPathN`/`1StartPathN`），配置目录 `%USERPROFILE%\Winstep\` 与 `C:\ProgramData\WinStep\`。
+8. **Dock 启动器拉起控制台程序 ≠ 恢复应用功能**：桌面版若父进程是 Winstep Nexus（`%USERPROFILE%\Winstep\Nexus.exe autostart`）而非 explorer，那是 **dock 项**自启，不是 Windows 恢复功能。关 Start_TrackProgAndDesktop 对它无效！（实测：关掉恢复功能后桌面版仍被 Nexus 拉起——根因是 Nexus dock 项 `1Path12=app.exe`）。Nexus dock 项存注册表 `HKCU\Software\WinSTEP2000\NeXuS\Docks`（键 `1PathN`/`1IconPathN`/`1StartPathN`），配置目录 `%USERPROFILE%\Winstep\` 与 `%ProgramData%\WinStep\`。
 9. **控制台程序"静默启动"**：`app.exe desktop` 是 Python 控制台程序，普通拉起必弹终端打启动日志（`<app> desktop --help` 无隐藏参数）。要静默需用 VBS `ws.Run "cmd", 0, False` 隐藏窗口方式拉起。若该应用你正在用、只是不想弹窗，倾向"保留自启但改隐藏 VBS"而非"关掉自启"。
 10. **⚠️⚠️ VBS 隐藏对 console wrapper 无效（实测铁证）**：`.vbs` 的 `Run "...", 0` 隐藏标志**只作用于第一层进程**。若目标是控制台启动器（如 venv 的 `app.exe`、`python.exe`），它内部 spawn python → uv python → 真正的 GUI exe 时，**每一层子进程都会新建 conhost（黑窗）**。实测启动链：`app.exe desktop`(27580) → python(27264) → uv python(25056) → the harness.exe(28528)，每层一个控制台。**改 VBS 隐藏 ≠ 问题解决**——必须查完整子孙链（`ParentProcessId` 递归）确认启动链里有没有多层控制台程序。
     - **判断方法**：`Get-CimInstance Win32_Process` 递归查目标的 ParentProcessId 链，若含 ≥2 层 python/app 控制台程序 = VBS 隐藏无效。
@@ -160,10 +160,10 @@ netstat -ano | grep ":6700"
     - 症状：开机弹 `Windows Script Host` 错误窗，`行N 字符1 错误: 缺少对象 'ws' 800A01A8`，脚本是启动文件夹里的 .vbs。
     - 根因：vbs 是 **UTF-8 编码（无 BOM）+ 中文注释**。WSH 对无 BOM 的 .vbs 按系统 ANSI(GBK) 解析，UTF-8 中文字节被 GBK 误读后行结构错乱 → 偶发把 `Set ws=CreateObject(...)` 之后的 `ws.xxx` 解析成"ws 未定义"。
     - 判定：`file x.vbs` → `Unicode text, UTF-8 text`（含中文）= 有雷；正常应为 `ASCII text`。**同文件夹纯 ASCII 的 vbs 从不报错**，就 UTF-8 中文的那个弹错。
-    - 修法：**vbs 一律纯 ASCII（英文注释或不注释）**。写完 `cscript //nologo "C:\Windows路径\xxx.vbs"` 校验退出码 0（⚠️ 若 vbs 拉常驻服务且带单实例保护则安全，会走"已在运行跳过"；无保护的会真启动，慎用）。
+    - 修法：**vbs 一律纯 ASCII（英文注释或不注释）**。写完 `cscript //nologo "<盘符>:\...\x.vbs"` 校验退出码 0（⚠️ 若 vbs 拉常驻服务且带单实例保护则安全，会走"已在运行跳过"；无保护的会真启动，慎用）。
 14. **⚠️⚠️ uv venv 的 pythonw.exe 是 Console 假 shim（日期已脱敏 实测铁证）**：
     - uv 生成的 `venv\Scripts\pythonw.exe`（约 45KB）**PE 头标注 `Console(subsystem=3)`，不是 GUI**。它 re-exec 回 uv base 目录的 console 版 `python.exe` → **即使用了 pythonw + CREATE_NO_WINDOW/DETACHED 照样弹 WindowsTerminal**。这是"OV 弹窗已根治却仍弹"的根因。
-    - 判定：**读 PE 头 subsystem 字段**（2=GUI 无窗 / 3=Console 弹窗），别只看文件名是 pythonw。直接用本技能自带的 `../scripts/pe_subsystem.py`：`python ../scripts/pe_subsystem.py C:\...\pythonw.exe`（等价的单行：`python -c "import struct;d=open(p,'rb').read();i=d.find(b'PE\x00\x00');o=i+24;print(struct.unpack('<H',d[o+68:o+70])[0])"`）。
+    - 判定：**读 PE 头 subsystem 字段**（2=GUI 无窗 / 3=Console 弹窗），别只看文件名是 pythonw。直接用本技能自带的 `../scripts/pe_subsystem.py`：`python ../scripts/pe_subsystem.py "<盘符>:\...\pythonw.exe"`（等价的单行：`python -c "import struct;d=open(p,'rb').read();i=d.find(b'PE\x00\x00');o=i+24;print(struct.unpack('<H',d[o+68:o+70])[0])"`）。
     - 修法：把 uv base 真 GUI `pythonw.exe`（`%LOCALAPPDATA%\uv\python\cpython-3.11-...\pythonw.exe`，subsystem=2）**直接覆盖** venv 里的假 shim——Python 靠 `pyvenv.cfg` 判定前缀，覆盖后 venv site-packages + .pth（含 pywin32 的 pywintypes.dll 搜索路径）全正常，且所有指向该 venv pythonw 的入口（vbs / ctl / serve 插件 / 快捷方式）**自动无窗**，无需逐个改路径。
     - ⚠️ 不要用"base pythonw + `sys.path.insert(venv site-packages)`"替代方案——base 解释器**不执行 venv 的 .pth**，pywin32 等依赖 .pth 的包会 `ModuleNotFoundError`（实测 pywintypes 缺失）。
     - 验证：覆盖后 `prefix` 仍指向 venv；`pythonw -c "import pywintypes,mcp"` 全 OK；启动服务后 conhost 数量零增长、WindowsTerminal 0 个。

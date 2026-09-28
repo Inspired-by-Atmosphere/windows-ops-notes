@@ -10,7 +10,7 @@ download bypassing the proxy and gunzip -> install and verify.
 Usage:
     python vscode_vsix_install.py <publisher.extension> [more ...]
     python vscode_vsix_install.py ms-vscode-remote.remote-ssh
-    python vscode_vsix_install.py ms-vscode-remote.remote-ssh --code "D:/vscode/bin/code"
+    python vscode_vsix_install.py ms-vscode-remote.remote-ssh --code "<VS Code install>/bin/code"
     python vscode_vsix_install.py <ext> --list-versions    # only show versions + engine
 
 Hard-won details (do not "simplify" these away):
@@ -37,15 +37,23 @@ import urllib.request
 GALLERY = "https://marketplace.visualstudio.com/_apis/public/gallery"
 QUERY_URL = GALLERY + "/extensionquery"
 FLAGS_ALL_VERSIONS = 439  # 0x1B7 - never use 951 (it adds IncludeLatestVersionOnly)
-# Lookup order: PATH first, then the usual per-machine install locations.
-# Add or trim entries to match your own setup - the D:/ entry is an example.
-CODE_CANDIDATES = [
-    "code",
-    "code.cmd",
-    "D:/Microsoft VS Code/bin/code",
-    "C:/Program Files/Microsoft VS Code/bin/code",
-    os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Microsoft VS Code", "bin", "code"),
-]
+# Lookup order: PATH first, then the standard per-machine / per-user install
+# roots. The roots are read from the environment (%ProgramFiles%, %LOCALAPPDATA%)
+# so no machine-specific drive letter is baked into this file. If VS Code lives
+# somewhere else, append your own path - e.g. "<drive>:/<dir>/bin/code".
+CODE_CANDIDATES = ["code", "code.cmd"]
+
+
+def installed_code_candidates():
+    """Absolute paths of the `code` CLI under the standard install roots."""
+    out = []
+    program_files = os.environ.get("ProgramFiles")
+    if program_files:
+        out.append(os.path.join(program_files, "Microsoft VS Code", "bin", "code"))
+    local_appdata = os.environ.get("LOCALAPPDATA")
+    if local_appdata:
+        out.append(os.path.join(local_appdata, "Programs", "Microsoft VS Code", "bin", "code"))
+    return out
 
 
 def opener_no_proxy():
@@ -66,7 +74,7 @@ def fetch(url, data=None):
 def find_code(explicit=None):
     if explicit:
         return explicit
-    for cand in CODE_CANDIDATES:
+    for cand in CODE_CANDIDATES + installed_code_candidates():
         found = shutil.which(cand)
         if found:
             return found

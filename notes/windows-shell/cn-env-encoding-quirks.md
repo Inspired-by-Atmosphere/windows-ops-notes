@@ -46,7 +46,7 @@ for enc in ('utf-8', 'utf-8-sig', 'gbk'):
 ### 3. 中文路径（ripgrep/search_files IO error）
 现象：search_files/ripgrep 处理含中文路径报 `IO error / os error 3`。
 解法：改用 read_file（Windows 原生路径）或 terminal 的 grep/ls。
-注意：Windows 原生 python 不认 MSYS 路径（/c/...），必须用 `C:\...` 原生路径。
+注意：Windows 原生 python 不认 MSYS 盘符根路径（MSYS 把盘符写成小写字母，形如 `/<盘符>/...`），必须用 `<盘符>:\...` 这类原生路径。
 
 ### 4. 网络拦截链（Clash TUN + the harness 防护）
 - Clash Verge TUN + fake-ip：DNS 全解析到 198.18.0.0/15（局域网 IP 查询要排除 TUN 网卡）
@@ -63,10 +63,10 @@ for enc in ('utf-8', 'utf-8-sig', 'gbk'):
 - Docker（如用）：docker.xuanyuan.run 轩辕镜像
 
 ### 6. MSYS 路径传给 Windows 原生程序（git/node）被误解析
-现象：git-bash 里把 `/e/work/my-project` 传给原生 git clone / node，报 `destination path already exists` 或 `Cannot find module 'E:\e\work\my-project\...'`（多出一个 `e\`）。
+现象：git-bash 里把 MSYS 盘符根路径（`/<盘符>/work/my-project`）传给原生 git clone / node，报 `destination path already exists` 或 `Cannot find module '<盘符>:\<盘符>\work\my-project\...'`（多出一层重复盘符）。
 原因：MSYS 路径转换对某些原生程序参数不生效（或半转换）。
-解法：一律用 Windows 风格路径 `E:/work/my-project`（正斜杠原生程序认）。
-注意：bash 内置命令（ls/cd/rm）用 `/e/...` 正常，**只有原生程序（git/node/python）参数用 `E:/...`**。
+解法：一律用 Windows 风格路径 `<盘符>:/work/my-project`（正斜杠原生程序认）。
+注意：bash 内置命令（ls/cd/rm）用 `/<盘符>/...` 正常，**只有原生程序（git/node/python）参数用 `<盘符>:/...`**。
 
 ## Pitfalls
 

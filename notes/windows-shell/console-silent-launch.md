@@ -29,8 +29,8 @@ import subprocess, os
 os.environ.pop("PYTHONPATH", None)   # 防她机 the harness venv 污染 import（本机坑）
 CREATE_NO_WINDOW = 0x08000000
 subprocess.Popen(
-    [r"C:\path\to\xxx.exe", "arg1"],
-    cwd=r"C:\working\dir",
+    [r"<盘符>:\path\to\xxx.exe", "arg1"],
+    cwd=r"<盘符>:\working\dir",
     creationflags=CREATE_NO_WINDOW,
     close_fds=True,
     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -42,13 +42,13 @@ subprocess.Popen(
 ### 2. 从 vbs / 快捷方式调用该 pyw
 ```vbs
 Set ws = CreateObject("Wscript.Shell")
-ws.Run """C:\...\pythonw.exe"" ""C:\...\start_x.pyw""", 0, False
+ws.Run """<盘符>:\...\pythonw.exe"" ""<盘符>:\...\start_x.pyw""", 0, False
 ```
-改快捷方式（桌面/开始菜单）：Target = pythonw.exe，Arguments = `"C:\...\start_x.pyw"`，保留原 IconLocation。用 PowerShell 改写：
+改快捷方式（桌面/开始菜单）：Target = pythonw.exe，Arguments = `"<盘符>:\...\start_x.pyw"`，保留原 IconLocation。用 PowerShell 改写：
 ```powershell
 $s = (New-Object -ComObject WScript.Shell).CreateShortcut($path)
-$s.TargetPath = "C:\...\pythonw.exe"; $s.Arguments = '"C:\...\start_x.pyw"'
-$s.IconLocation = "C:\...\原程序.exe,0"; $s.Save()
+$s.TargetPath = "<盘符>:\...\pythonw.exe"; $s.Arguments = '"<盘符>:\...\start_x.pyw"'
+$s.IconLocation = "<盘符>:\...\原程序.exe,0"; $s.Save()
 ```
 
 ### 3. 验证（必须实测，不许"应该没问题"）

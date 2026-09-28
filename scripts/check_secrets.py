@@ -90,7 +90,7 @@ DOC_PATH_RE = re.compile(
 # form used in gate documentation) is a pattern, not a path.
 CLASS_IN_PATH_RE = re.compile(r"\[[^\]\s]{1,32}\]?")
 
-# An elided path ("/c/...", "C:\\...", "<drive>:/path/to/x.py") is documentation
+# An elided path ("/c/...", "<drive>:\\...", "<drive>:/path/to/x.py") is documentation
 # shorthand. Only the dots survive once the prefix is stripped, so nothing about
 # the author's real filesystem is disclosed.
 ELIDED_PATH_RE = re.compile(r"(?i)^(?:[A-Za-z]:[\\/]|/(?:[c-z]|mnt/[c-z])/)?[.\\/\s]+$")

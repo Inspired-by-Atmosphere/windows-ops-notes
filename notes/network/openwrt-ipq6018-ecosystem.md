@@ -80,7 +80,7 @@ mkdir -p /tmp/x && cd /tmp/x && apk extract --allow-untrusted /tmp/kmod-tun-*.ap
 `shake -C $SRC` 与 `O=` 同时用，否则 `olddefconfig` 报 "没有规则可制作目标"、配置悄悄不生效。
 
 **优先级提示**：如果目的只是"从外网进宿舍网段"，先看已有 Linux 主机能不能当 Tailscale 子网路由
-（`tailscale set --advertise-routes=192.168.1.0/24`，需 `net.ipv4.ip_forward=1`），它**不需要任何内核模块**，
+（`tailscale set --advertise-routes=198.51.100.0/24`，需 `net.ipv4.ip_forward=1`），它**不需要任何内核模块**，
 比在路由器上折腾 tun.ko 快一个数量级；只在必须让路由器本体做节点时才回到 tun.ko。
 
 ## 可装 / 禁装（2G 内存 + 无 swap + 2G 分区）

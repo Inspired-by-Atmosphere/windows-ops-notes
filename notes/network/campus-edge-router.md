@@ -33,10 +33,10 @@
 
 ## 典型现场（Example University · main campus · campus broadband）
 
-- 出口路由器：**a soft-router (OpenWrt-based)**（Qualcomm IPQ6018，ImmortalWrt SNAPSHOT，LuCI 25.x，1WAN+4LAN 千兆，WiFi6 双频）；前身an older consumer router（WAN MAC `AA:BB:CC:DD:EE:02`，校园网地址 `10.0.0.0/20`，网关 `10.0.0.254`）。
-- 校园网认证：a vendor captive portal (ePortal / SSO)，门户 `http://10.0.0.254/`。认证请求体 AES-CBC 加密，**只走浏览器自动化**，不要手写协议；若协议解密失败，优先改用浏览器自动化完整回放登录流程。
-- 聚合网关 `10.0.0.35:9999/api/aggregation` 学生网不可达，不要在这条路上耗时间。
-- 内网约定：小服务器 `192.168.1.5`、大服务器 server-a `192.168.1.2`、the SBC node `192.168.1.15`（走 5G 无线）。
+- 出口路由器：**a soft-router (OpenWrt-based)**（Qualcomm IPQ6018，ImmortalWrt SNAPSHOT，LuCI 25.x，1WAN+4LAN 千兆，WiFi6 双频）；前身an older consumer router（WAN MAC `AA:BB:CC:DD:EE:02`，校园网地址 `192.0.2.0/24`，网关 `192.0.2.254`）。
+- 校园网认证：a vendor captive portal (ePortal / SSO)，门户 `http://192.0.2.254/`。认证请求体 AES-CBC 加密，**只走浏览器自动化**，不要手写协议；若协议解密失败，优先改用浏览器自动化完整回放登录流程。
+- 聚合网关 `192.0.2.35:9999/api/aggregation` 学生网不可达，不要在这条路上耗时间。
+- 内网约定：小服务器 `198.51.100.5`、大服务器 server-a `198.51.100.2`、the SBC node `198.51.100.15`（走 5G 无线）。
 
 ## 操作流程
 
@@ -79,14 +79,14 @@ ifup wan          # 或 rpc("rc","init",{"name":"network","action":"restart"})
 
 校园网会把会话过期/换过 IP 的设备踢回未认证状态。症状是**看起来"半通"**：DNS 仍能解析、网关 ARP 仍
 REACHABLE，但其它 TCP/ICMP 全被挡（`uclient-fetch` 报 `Failed to send request: Operation not permitted`），
-访问任意 http 站点被 JS 跳转到 `http://10.0.0.254/eportal/index.jsp?...`。
+访问任意 http 站点被 JS 跳转到 `http://192.0.2.254/eportal/index.jsp?...`。
 
 此时**不必登录门户**——只要让校园网 NAC 看到一次真实链路事件，就会重新触发 MAC 无感认证（MAB）：
 
 ```bash
 ip link set wan down; sleep 25; ip link set wan up    # 必须物理层 down/up
 sleep 30                                              # MAB 生效有延迟，别刚 up 就判定失败
-uclient-fetch -T 15 -O - http://www.baidu.com | grep -q 10.0.0.254 && echo 仍被劫持 || echo 已认证
+uclient-fetch -T 15 -O - http://www.baidu.com | grep -q 192.0.2.254 && echo 仍被劫持 || echo 已认证
 ```
 
 - **`ifdown wan; ifup wan` 救不了这种状态**：netifd 重跑 proto 但 PHY 不 down，NAC 看不到链路事件，不会重触发。
@@ -103,7 +103,7 @@ uclient-fetch -T 15 -O - http://www.baidu.com | grep -q 10.0.0.254 && echo 仍�
 ### 2c. 判"认证状态"的两条铁律
 
 - **看内容，不看状态码**：劫持页是 HTTP 200 + 正文里一段 JS 跳转，最终 URL 往往仍是你请求的那个地址。
-  判据取响应正文里有没有 `10.0.0.254`。
+  判据取响应正文里有没有 `192.0.2.254`。
 - **在持有这条上行链路的那台机器上探**：下游设备（小服务器/开发板）自己可能还有第二条默认路由（比如它自己的
   WiFi/热点，`ip route` 里 metric 更小），它报"网络正常"只说明它自己通，不代表宿舍出口通。
 
@@ -127,7 +127,7 @@ uclient-fetch -T 15 -O - http://www.baidu.com | grep -q 10.0.0.254 && echo 仍�
 
 ### 3. 改 LAN 网段 + 开 DHCP
 
-- 目标：LAN 回原网段（如 `192.168.1.1/24`），DHCP 池避开静态设备（例：起 `100`、数 `150`、租期 `12h`）。
+- 目标：LAN 回原网段（如 `198.51.100.1/24`），DHCP 池避开静态设备（例：起 `100`、数 `150`、租期 `12h`）。
 - 用 `uci set` 改完再一次性 reload；`uci commit` 走 ubus 会被拒，用 `uci apply`。
 - reload 后立刻用新地址继续操作；**Windows 客户端必须断连/重连网卡**（或 `ipconfig /release` + `/renew`）才会拿新网段地址——不要因为客户端还停在旧地址就以为路由器没改成功。
 
@@ -188,7 +188,7 @@ sysupgrade --restore-backup /tmp/backup.tar.gz # 恢复
 - **dropbear 有 `DirectInterface='lan'` 时，LAN 地址一变 22 端口立刻拒连**，而 `rc list` 仍显示 running：删掉该选项 + commit + 重启 dropbear 即可，不要误判成 dropbear 挂了或防火墙拦了。
 - **ubus 的 namespace 和 method 必须分开传**：`["call",[tok,"uci","set",{...}]]`。把 `uci.set` 当整串方法名会得到 `-32700 Parse error`。
 - **`file.write` 返回非负数（0 或 fd 号）即成功**，不是错误码；写完要 `rc init`/`uci apply` 才生效。
-- **门户劫持页会被误当成路由器响应**：请求一个路由器已经不再持有的旧 LAN IP 时，包按默认路由出去，被校园网 HTTP 劫持成 `location.href="http://10.0.0.254/eportal/index.jsp?wlanuserip=..."` 的跳转页。看到它应先怀疑"这个 IP 已经不在路由器上了"，而不是后台坏了。认准路由器本体：`/cgi-bin/luci/` 返回 `ImmortalWrt - LuCI`。
+- **门户劫持页会被误当成路由器响应**：请求一个路由器已经不再持有的旧 LAN IP 时，包按默认路由出去，被校园网 HTTP 劫持成 `location.href="http://192.0.2.254/eportal/index.jsp?wlanuserip=..."` 的跳转页。看到它应先怀疑"这个 IP 已经不在路由器上了"，而不是后台坏了。认准路由器本体：`/cgi-bin/luci/` 返回 `ImmortalWrt - LuCI`。
 - **netifd 可能保留旧地址**：reload 后 `ip addr` 还显示双 IP 时，用 `network.interface.lan` 的 `uptime`/`updated` 判断是否真的重启过，必要时重启接口——别反复写配置。
 - **旧路由器退役后不要再通电**（MAC 冲突）。
 - **别用"源地址绑定"的探测结果判定某条链路是死的**：笔记本同时插网线+连热点时会有两条默认路由，

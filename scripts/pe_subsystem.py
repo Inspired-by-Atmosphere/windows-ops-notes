@@ -10,7 +10,7 @@ given exe is WITHOUT running it.
 Subsystem: 2 = GUI (no console / no popup), 3 = Console (pops a window).
 
 Usage:
-    python pe_subsystem.py C:\\path\\to\\pythonw.exe [more.exe ...]
+    python pe_subsystem.py <drive>:\\path\\to\\pythonw.exe [more.exe ...]
 
 Reference: notes/windows-shell/console-silent-launch.md (pitfall: uv venv pythonw shim).
 """

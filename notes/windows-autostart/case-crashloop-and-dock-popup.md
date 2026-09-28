@@ -14,7 +14,7 @@
 desktop 应用版、the memory stack 记忆栈、chat-chat-bridge、gateway 均在本机。
 
 ## 第一轮修复（A+B+C）—— 做完了但不够
-1. **A**：`启动文件夹\memory-stack.bat`（内含 `start "" python start_server.py`，弹 2 窗）→ 改写为 `memory-stack.vbs`（隐藏）。验证：`cscript //nologo "C:\...\x.vbs"`（必须 Windows 原生路径，MSYS /c/ 会被当参数）。
+1. **A**：`启动文件夹\memory-stack.bat`（内含 `start "" python start_server.py`，弹 2 窗）→ 改写为 `memory-stack.vbs`（隐藏）。验证：`cscript //nologo "<盘符>:\...\x.vbs"`（必须 Windows 原生路径，MSYS 盘符根路径（`/<盘符>/...`）会被当参数）。
 2. **B**：删启动文件夹 `gateway.vbs`，保留计划任务 App_Gateway。删前做了**计划任务演练**：停 gateway → `Start-ScheduledTask App_Gateway` → 新进程起来、6700 端口恢复、三平台 connected。证明删启动器不断联（启动器一次性、进程常驻不受影响）。
 3. **C**：`Start_TrackProgAndDesktop=0` 关"登录后重新打开应用"。
 
@@ -47,7 +47,7 @@ serve (python, 桌面版后端) ──> cmd /c npx ... example-mcp ──> node
 ## 真凶 2：Dock 启动器拉起控制台程序
 - 进程树：`Nexus.exe (%USERPROFILE%\Winstep\Nexus.exe autostart)` → `app.exe desktop` → `the harness.exe`（Electron 桌面版）
 - Nexus dock 项存注册表 `HKCU\Software\WinSTEP2000\NeXuS\Docks`，键 `1Path12 = ...\app.exe`、`1IconPath12`、`1StartPath12`（注意：只查 Path0-10 会漏，要查全部 PathN）
-- 配置目录：`%USERPROFILE%\Winstep\`（含 NeXuS/Profiles）、`C:\ProgramData\WinStep\`
+- 配置目录：`%USERPROFILE%\Winstep\`（含 NeXuS/Profiles）、`%ProgramData%\WinStep\`
 - `app.exe desktop` 是 Python 控制台程序，`desktop --help` 无隐藏参数 → 普通拉起必弹终端打启动日志（"Launching packaged the desktop app" + 可能的 ECONNRESET）
 
 ⚠️ **关键区分**：桌面版父进程 = Nexus → 是 dock 自启，**不是** Windows"登录后重新打开应用"（那个是 explorer 父进程）。关 Start_TrackProgAndDesktop 对 dock 无效。

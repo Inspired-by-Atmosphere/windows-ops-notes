@@ -10,19 +10,19 @@
 
 # 校园网 Portal 自动重认证服务（部署与运维）
 
-日期已脱敏 起在**小服务器 server-b**（192.168.1.5）上线。目标：宿舍 the old router 专线的 portal 会话掉线后自动登录恢复，不再依赖人工。
+日期已脱敏 起在**小服务器 server-b**（198.51.100.5）上线。目标：宿舍 the old router 专线的 portal 会话掉线后自动登录恢复，不再依赖人工。
 
 ## 现场事实（Example University · main campus · campus broadband）
 
-- 宿舍出口 = **a soft-router (OpenWrt-based)**（ImmortalWrt，`192.168.1.1`）：做 portal 认证 + NAT 分网。旧的 ISP 光猫 the old router 已于 日期已脱敏 退役丢弃，但其 WAN MAC `AA:BB:CC:DD:EE:02` 被**克隆沿用**（校园网按 MAC 放行，换机必须沿用）。校园网是**一账号一设备**，路由器就是那"一台设备"。
+- 宿舍出口 = **a soft-router (OpenWrt-based)**（ImmortalWrt，`198.51.100.1`）：做 portal 认证 + NAT 分网。旧的 ISP 光猫 the old router 已于 日期已脱敏 退役丢弃，但其 WAN MAC `AA:BB:CC:DD:EE:02` 被**克隆沿用**（校园网按 MAC 放行，换机必须沿用）。校园网是**一账号一设备**，路由器就是那"一台设备"。
 - 认证平台 = **厂商 Portal/ePortal + 统一身份认证 SSO**：
-  - 门户/自服务 `http://10.0.0.254/`（SPA，Angular）；自服务首页 `/self/index`；设备页 `/self/my-devices`（显示在线设备 MAC/IP/无感状态，含「下线」「注册无感/关闭无感」按钮）。
-  - SSO 登录页 `http://10.0.0.254/pc/center?service=...`（`#nameInput` + `input[type=password]` + 隐私复选框 + 「立即登录」）。
-  - SSO 服务器名：`/sam-sso/api/sso/server/name` → `http://10.0.0.254/cas-sso`。
+  - 门户/自服务 `http://192.0.2.254/`（SPA，Angular）；自服务首页 `/self/index`；设备页 `/self/my-devices`（显示在线设备 MAC/IP/无感状态，含「下线」「注册无感/关闭无感」按钮）。
+  - SSO 登录页 `http://192.0.2.254/pc/center?service=...`（`#nameInput` + `input[type=password]` + 隐私复选框 + 「立即登录」）。
+  - SSO 服务器名：`/sam-sso/api/sso/server/name` → `http://192.0.2.254/cas-sso`。
   - 可达 API 前缀：`/sam/api/...`（`/sam/api/protected/...` 直出 JSON；`/sam/api/userself/...` 响应体是 **AES 加密的 base64 块**）。
   - 登录/保活接口名（在 SPA bundle 里）：`/portal/portalAuthen/login`、`/portal/portalAuthen/keepAlive`、`/eportal/network/offline`、`/portal/mabAuthen/getNoPerceptualList`（无感认证）、`/portal/user/userbind/getMaxBindNumber`（绑定上限）。**请求体为 AES-CBC 加密**（头 `isPortal: true, encrypted: true`），所以只走浏览器自动化，不要手写协议。
-  - 聚合网关写在 bundle 里是 `10.0.0.35:9999/api/aggregation`，**学生网不可达**，别在这条路上耗时间。
-- 无感认证（MAB）：自助中心可对某设备「注册无感」。⚠️ **MAB 只在链路 up 时触发**；链路不断但服务端会话过期/换 IP（校园侧看到的是 `10.0.0.1` 这类校园内网地址）→ 不会重新触发 → 表现为"偶尔要手动登录"。
+  - 聚合网关写在 bundle 里是 `192.0.2.35:9999/api/aggregation`，**学生网不可达**，别在这条路上耗时间。
+- 无感认证（MAB）：自助中心可对某设备「注册无感」。⚠️ **MAB 只在链路 up 时触发**；链路不断但服务端会话过期/换 IP（校园侧看到的是 `192.0.2.1` 这类校园内网地址）→ 不会重新触发 → 表现为"偶尔要手动登录"。
 
 ## 部署物
 
@@ -51,7 +51,7 @@ sudo systemctl disable --now campus-autologin.timer   # 停用
 
 **保活纪律（日期已脱敏 定，与看门狗配套）**：`/usr/bin/wan_keepalive.sh`（cron `*/1`）每分钟从 WAN 口 ping 校园网关一次（纯保活、成功零输出、失败记 `/etc/wan_keepalive.log`）。理由见下节：平台闲置探测缺省 180s，NAT 后的路由器"长时间只转不发"会被判闲置并把会话收走。**任何改动都要保证：从 WAN 口发出的真实流量间隔 ≤120 秒。**
 
-- **探测铁律：别用 captive 探测 URL**（`connect.rom.miui.com/generate_204` 之类）——校园网常把它放进**免认证白名单**，未认证时也回 204，脚本于是永远判"网络正常"、从不触发登录（本机 9/15 那版就栽在这：日志一路"网络正常——本轮无需登录"，实际全网被劫持）。判据必须是**真实站点正文**，并检 `10.0.0.254` 劫持标记。
+- **探测铁律：别用 captive 探测 URL**（`connect.rom.miui.com/generate_204` 之类）——校园网常把它放进**免认证白名单**，未认证时也回 204，脚本于是永远判"网络正常"、从不触发登录（本机 9/15 那版就栽在这：日志一路"网络正常——本轮无需登录"，实际全网被劫持）。判据必须是**真实站点正文**，并检 `192.0.2.254` 劫持标记。
 - **MAB 重触发要物理 link down**：`ifdown/ifup` 不动 PHY，校园网 NAC 看不到 link flap → 不触发；必须 `ip link set <wan> down`。生效有延迟（实测数十秒到几分钟，别急着判失败）。
 - 自助中心 `/self/index` 登录**不恢复线路**（9/16 六次实测证伪）；真正管用的只有设备门户认证或 MAB。
 - 弹 WAN 不是万能：MAB 失效或校园网转强制门户登录时，看门狗会一直弹（退避到 2h 上限）而链路不恢复——那时才需要门户登录方案（见下节）。
@@ -61,7 +61,7 @@ sudo systemctl disable --now campus-autologin.timer   # 停用
 - **别反复试密码**：SSO 失败会弹 `captcha_code` 验证码字段，脚本随即失效；路由器（the old router）3 次登录失败会锁 30~60 秒。
 - the old router 的**出厂默认超管账号**：那几组厂商默认口令（此处不记录具体值）**实测均失败**——装维已经把默认值改掉了。剩下的只有两条不需要凭据的线索：机身标签上的普通用户口令（由用户本人试），或该品牌光猫的**免密开 telnet 路径**（`/cgi-bin/telnetenable.cgi?telnetenable=1&key=<MAC大写无分隔>`）→ telnet `root` + 厂商默认口令格式（固定前缀 + MAC 后 6 位，具体前缀不在本仓库记录）→ `sendcmd 1 DB p DevAuthInfo` 读回账号信息。**明文口令一律不写进任何文档或脚本。**
 - 小服务器没有 chromium 包但有 **google-chrome-stable** → Playwright 用 `channel='chrome'`，别 `playwright install chromium`（省 150MB 下载）。
-- 登录页/门户页会拦截 http 请求做重定向：探测外网时要判 `10.0.0.254` 出现在最终 URL = 未认证。
+- 登录页/门户页会拦截 http 请求做重定向：探测外网时要判 `192.0.2.254` 出现在最终 URL = 未认证。
 - 通知可选：脚本读 `CHAT_BRIDGE_HTTP`/`CHAT_BRIDGE_TOKEN`/`CHAT_BRIDGE_TARGET` 环境变量走 chat-bridge `send_private_msg`；未配置只写日志。
 
 ## 为什么"自助中心里开了无感，照样掉线"（日期已脱敏 机理定案草案）

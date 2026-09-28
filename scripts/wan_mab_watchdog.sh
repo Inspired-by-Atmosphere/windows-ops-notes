@@ -21,7 +21,9 @@
 # State: $STATE  (default /etc/wan_mab.state)
 #
 # Environment overrides (all optional):
-#   PORTAL_MARK   marker string found in the hijack page (required to detect hijack)
+#   PORTAL_MARK   marker string found in the hijack page. The default is the
+#                 RFC 5737 example address 192.0.2.254 - set it to your own
+#                 portal/gateway IP, the marker is what detection keys on.
 #   PROBE_URLS    space separated probe targets, real content not captive-check URLs
 #   WAN_IF        WAN interface name (default: wan)
 #   FAIL_NEED     consecutive failures before bouncing (default 2)
@@ -29,7 +31,7 @@
 #   DOWN_SECONDS  how long the link stays down (default 25)
 #   SETTLE        wait after the link is back before probing (default 25)
 
-PORTAL_MARK="${PORTAL_MARK:-10.0.0.254}"
+PORTAL_MARK="${PORTAL_MARK:-192.0.2.254}"
 PROBE_URLS="${PROBE_URLS:-http://www.baidu.com http://www.163.com}"
 WAN_IF="${WAN_IF:-wan}"
 LOG="${LOG:-/etc/wan_mab.log}"

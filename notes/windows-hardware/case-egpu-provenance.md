@@ -50,7 +50,7 @@
 
 ```bash
 # 1. 显卡总览（含显存！）
-"/c/Windows/System32/nvidia-smi.exe" --query-gpu=index,name,pci.bus_id,memory.total,memory.free,memory.used,driver_version --format=csv
+"<盘符>:/Windows/System32/nvidia-smi.exe" --query-gpu=index,name,pci.bus_id,memory.total,memory.free,memory.used,driver_version --format=csv
 
 # 2. 显示类 PnP 详情
 powershell.exe -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; Get-PnpDevice -PresentOnly -Class Display | Format-List FriendlyName,InstanceId,Status,Problem,Class"
@@ -59,7 +59,7 @@ powershell.exe -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::U
 powershell.exe -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; Get-CimInstance Win32_PnPEntity -Filter 'DeviceID LIKE \"%383292C7%\"' | Format-List Name,DeviceID,Manufacturer,Status"
 
 # 4. 安装史（换 DEV ID 数字）
-grep -n -i -B3 -A15 "DEV_2484" /c/Windows/inf/setupapi.dev.log | head -150
+grep -n -i -B3 -A15 "DEV_2484" "<盘符>:/Windows/inf/setupapi.dev.log" | head -150
 
 # 5. USB4/雷电链路
 powershell.exe -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; Get-CimInstance Win32_PnPEntity -Filter \"Name LIKE '%Thunderbolt%' OR Name LIKE '%USB4%' OR Name LIKE '%PCI Express%'\" | Format-Table -AutoSize Name,DeviceID | Out-String -Width 250"

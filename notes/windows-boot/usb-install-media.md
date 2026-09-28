@@ -53,13 +53,13 @@ Get-Partition | Where-Object { $_.DriveLetter } | Format-Table DiskNumber,DriveL
 
 ## Pitfalls（教训）
 0. **Ventoy 数据区 exFAT = DOS/FreeDOS 读不了**：主板 BIOS 刷写工具（如华南官方 fpt.exe）常是 DOS 程序（MZ+LE 头，非 Windows PE），且 Ventoy 数据分区是 exFAT——不能把刷写文件丢 Ventoy 盘再启动 FreeDOS 读。解法：①把工具+固件+脚本打包成自包含 FreeDOS 启动 ISO 扔 Ventoy；②用 Rufus 把第二个 U 盘做成 FreeDOS 盘（内置 FreeDOS 选项，FAT32），格式前先确认盘里没有要留的数据。判断 exe 是不是 DOS 程序：xxd 看文件头，e_lfanew 偏移处是 `LE`/`LX` 而非 `PE\0\0` 即 DOS 扩展程序（dPMODE/W 等），WinPE 跑不了。刷写类 DOS 工具（fpt.exe 等）常要求**同目录伴生文件**（如 fparts.txt）——拷工具时把官方包解出来的全部文件一起拷，漏一个就报错拒绝运行（fpt 报 Error 75 file not found，并写 ERROR.LOG 到当前目录可查）
-1. **IP 归属禁凭 TTL/ARP 猜**：新装机 SSH 拒连时，TTL=64 只说明"是台 Linux"，可能是别人（192.168.1.6 误判为大服务器教训，真 IP 是 10.8）。让用户在目标机跑 `ip addr` 对号入座；只有 `127.0.0.1/8` = 网卡没拿到 IP（查网线 + `sudo dhclient`）
+1. **IP 归属禁凭 TTL/ARP 猜**：新装机 SSH 拒连时，TTL=64 只说明"是台 Linux"，可能是别人（曾把 `198.51.100.6` 误判成大服务器 server-a；真机在另一个地址）。让用户在目标机跑 `ip addr` 对号入座；只有 `127.0.0.1/8` = 网卡没拿到 IP（查网线 + `sudo dhclient`）
 2. **sudo -S 管道密码被 the harness security policy拦截**：用 pty 交互（background+pty，process write 密码 + submit 回车）或让用户图形界面操作
 3. **SSH 首登部署公钥**：pty 交互 ssh 登录后 `mkdir -p ~/.ssh && echo '<pubkey>' >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys` → 之后免密（`-i ~/.ssh/id_ed25519_inspire -o BatchMode=yes`）
 4. **Windows PTY 交互**：process(write) 发文本 + process(submit) 发回车；裸 `\n` 在 Windows PTY 不触发回车
 5. **GUI 刷盘工具（Rufus 等）普通权限启动会静默失败/不弹窗**：必须 `powershell Start-Process -FilePath <exe> -Verb RunAs` 提权启动（本次实测 Rufus 普通启动进程不出现，提权后正常弹窗）。Rufus 内置 FreeDOS 选项（引导类型下拉选 FreeDOS），做 BIOS 刷写盘不需要额外下载 FreeDOS 镜像
 6. **大 ISO 快速判同：先 stat 大小 + `head -c 1M | md5sum` 抽样**，全量 md5sum 4.7GB 会超时（>180s）；大小一致 + 首 1MB 哈希一致即可基本确认同一文件（如两个 U 盘上的重复 ISO），全量校验只在正式交付时做
-7. **git-bash 里 curl 是原生程序，不认 `/f/` 这类 MSYS 路径**：`curl -o /f/x.iso` 会失败并疯狂重试（Warning: Failed to open the file，curl 23），**必须写 `F:/x.iso`**。而 bash 自己的重定向 / `ls /f/` 正常（MSYS 程序才认）——同一个脚本里两种写法混用是这个坑的诱因
+7. **git-bash 里 curl 是原生程序，不认 `/<盘符>/` 这类 MSYS 路径**：`curl -o /<盘符>/<file>.iso` 会失败并疯狂重试（Warning: Failed to open the file，curl 23），**必须写 Windows 原生路径（如 `<盘符>:/<file>.iso`）**。而 bash 自己的重定向 / `ls /<盘符>/` 正常（MSYS 程序才认）——同一个脚本里两种写法混用是这个坑的诱因
 8. **下载大 ISO 先测速再决定走不走代理**：同一微软 CDN 直连常比走 Clash 快（实测 9.1 vs 7.6 MB/s）；`-C -` 续传 + `--retry 30 --retry-all-errors` 是长时间下载的保命参数。Windows 侧确认落盘大小 == HTTP `Content-Length`
 9. **Live 会话里不要指望回写 Ventoy 数据分区**：从 U 盘起的 Live 系统里 Ventoy 通过 device-mapper 占着那张盘（ISO 挂在 `/cdrom`），再 `mount /dev/sdX1` 报 `already mounted or mount point busy`，dmesg 是 `Can't open blockdev`。要改 U 盘里的文件（如更新随盘的说明文档）回宿主系统改，别在 Live 会话里试
 10. **U 盘启动项是一次性的**：`efibootmgr` 里当前 USB 启动只体现为 `BootCurrent: 000X`，不在 `BootOrder` 里、重启后不保留 —— 固件会回到内置盘（默认进原系统）。所以给用户的指令必须写"重启 → 按 F11/启动菜单键 → 选 U 盘"，**不能承诺"重启会自动进 U 盘"**，也不必为此改 BIOS 启动项

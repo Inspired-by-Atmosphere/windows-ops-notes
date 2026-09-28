@@ -62,7 +62,7 @@ reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" 2>/dev/null
 reg query "HKLM\Software\Microsoft\Windows\CurrentVersion\Run" 2>/dev/null
 # ② 启动文件夹（用户 + 公共）
 ls -la "$APPDATA/Microsoft/Windows/Start Menu/Programs/Startup"
-ls -la "/c/ProgramData/Microsoft/Windows/Start Menu/Programs/Startup"
+ls -la "$ProgramData/Microsoft/Windows/Start Menu/Programs/Startup"
 # ③ 计划任务（非禁用，含自定义任务）
 powershell -NoProfile -Command "Get-ScheduledTask | Where-Object {\$_.State -ne 'Disabled'} | ForEach-Object { Write-Output (\$_.TaskPath + \$_.TaskName) }"
 # ④ RunOnce / StartupApproved
@@ -108,10 +108,10 @@ cat gateway_state.json
 1. **bat → vbs 隐藏启动**：照抄 `Run "cmd", 0, False` 模式
    ```vbs
    Set ws = CreateObject("Wscript.Shell")
-   ws.CurrentDirectory = "C:\..."
-   ws.Run """C:\path\python.exe"" ""C:\path\script.py""", 0, False
+   ws.CurrentDirectory = "<盘符>:\..."
+   ws.Run """<盘符>:\path\to\python.exe"" ""<盘符>:\path\to\script.py""", 0, False
    ```
-   校验：`cscript //nologo "C:\Windows路径\xxx.vbs"`（注意：**不能用 MSYS /c/ 路径**，cscript 会误当成参数）。
+   校验：`cscript //nologo "<盘符>:\...\x.vbs"`（注意：**不能用 MSYS 盘符根路径（`/<盘符>/...`）**，cscript 会误当成参数）。
    ⚠️ **cscript 校验 VBS 会实际执行脚本**！若脚本会启动常驻程序，用 `wscript //nologo` 语法检查或接受它启动后自动退（多数程序检测已运行会退出）。不要用 cscript 校验含"启动服务"的 VBS 而误启一堆进程。
 2. **去重复启动**：多启动点指向同一服务时，保留"带环境变量+可管理"的那个（计划任务优先），删启动文件夹裸启动器。
 3. **桌面版/应用被"登录后重新打开"拉起**：这功能不在启动列表里，关它：
@@ -161,7 +161,7 @@ cat gateway_state.json
 ## 铁律
 - **改任何启动项前先备份**到 `%LOCALAPPDATA%\app\backups\<日期>/`，报备份路径给用户。
 - **taskkill 在 git-bash 里 `//F` 会报"无效参数"**，改用 PowerShell `Stop-Process -Force`。
-- **cscript 校验 VBS 用 Windows 原生路径**，MSYS `/c/...` 会被当成命令行参数。
+- **cscript 校验 VBS 用 Windows 原生路径**，MSYS 盘符根路径（`/<盘符>/...`）会被当成命令行参数。
 - 宣布完成前必须实测验证（计划任务演练 + 端口 + 服务状态三方核对），不许"应该没问题"。
 - **杀 gateway/服务进程后可能断联**（消息转发中断）——立即用计划任务 `Start-ScheduledTask` 拉起并确认恢复（6700 端口 + state 文件 platforms 全 connected）。杀进程前先告知用户会有几秒闪断。
 - **重启 gateway 前先确认对话走哪个进程**：桌面版对话走 `serve`，即时消息通道转发走 `gateway`。重启 gateway 只闪断消息通道；重启 serve 会中断当前桌面对话，慎做。

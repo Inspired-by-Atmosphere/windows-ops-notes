@@ -60,10 +60,10 @@
 
 ## 设备来历深挖流程（2026-08 实证有效）
 
-1. **nvidia-smi**：`"/c/Windows/System32/nvidia-smi.exe" -L` 列卡；`--query-gpu=index,name,pci.bus_id,memory.total,memory.free,memory.used,driver_version --format=csv`。bus `01:00.0`≈内置独显；`0F:00.0` 等大 bus 号≈外设桥后面（eGPU/坞）。
+1. **nvidia-smi**：`"<盘符>:/Windows/System32/nvidia-smi.exe" -L` 列卡；`--query-gpu=index,name,pci.bus_id,memory.total,memory.free,memory.used,driver_version --format=csv`。bus `01:00.0`≈内置独显；`0F:00.0` 等大 bus 号≈外设桥后面（eGPU/坞）。
 2. **PnP 详情**：`Get-PnpDevice -PresentOnly -Class Display | Format-List FriendlyName,InstanceId,Status,Problem`（Class 换 System/Bluetooth/USB 等查其他类）。
 3. **父设备**：`Get-CimInstance Win32_PnPEntity -Filter 'DeviceID LIKE "%<父ID>%"'`。
-4. **安装日志**（判来历的决定性证据）：`grep -i -B3 -A15 "DEV_2484" /c/Windows/inf/setupapi.dev.log`。看 `[Boot Session: 时间]`、`>>> [Device Install ...] 时间`、**`Parent Device:` 行**。
+4. **安装日志**（判来历的决定性证据）：`grep -i -B3 -A15 "DEV_2484" "<盘符>:/Windows/inf/setupapi.dev.log"`。看 `[Boot Session: 时间]`、`>>> [Device Install ...] 时间`、**`Parent Device:` 行**。
    - 连接方式判定：父设备 `VEN_1B21&DEV_2461` = **ASM2464PD USB4-PCIe 桥芯片** = USB4/雷电 eGPU 坞（ADT-Link UT3G 类）。完整链路：Intel USB4 主机路由器(8086 7EC3) → ASM2464 桥 → PCIe 交换机端口 → 显卡+其 HDMI/DP 音频。
 5. **驱动安装时间**：日志 `Section start` 时间戳即装驱动时刻；驱动 INF 版本即 WHQL 版本。
 

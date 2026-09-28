@@ -36,7 +36,7 @@
 
 ## minidump 访问
 
-- `C:\Windows\Minidump\*.dmp` 普通用户**无读权限**（Permission denied）——别反复试
+- `<盘符>:\Windows\Minidump\*.dmp` 普通用户**无读权限**（Permission denied）——别反复试
 - 蓝屏码优先从 1001 事件拿；日志滚出后无解（除非提权）
 
 ## 本机案例档案

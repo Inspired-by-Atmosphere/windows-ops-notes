@@ -12,8 +12,9 @@ Two rounds are recorded:
   the last section.
 
 Placeholder ranges/values used throughout: `192.168.1.x`, `10.0.0.x` for private addresses;
-`AA:BB:CC:DD:EE:xx` for MACs; `$HOME/…`, `~/…` and repository-relative paths for filesystem
-locations; `<…>` angle-bracket tokens for anything the reader must supply.
+RFC 5737 `192.0.2.0/24` and `198.51.100.0/24` where a complete address is needed; `<盘符>` for a
+drive letter; `AA:BB:CC:DD:EE:xx` for MACs; `$HOME/…`, `~/…` and repository-relative paths
+for filesystem locations; `<…>` angle-bracket tokens for anything the reader must supply.
 
 ## Round 1 — bulk sanitization
 

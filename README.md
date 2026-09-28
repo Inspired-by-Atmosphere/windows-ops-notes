@@ -119,7 +119,7 @@ failure, which makes them usable as gates.
 
 | Script | Purpose |
 |---|---|
-| [check_secrets.py](scripts/check_secrets.py) | Zero-dependency repo scanner: credentials, high-entropy tokens, private IPs, MACs, e-mails, profile paths, internal hostnames |
+| [check_secrets.py](scripts/check_secrets.py) | Zero-dependency repo scanner: credentials, high-entropy tokens, private IPs, MACs, e-mails, profile paths, internal hostnames. A private address only counts when all four octets are numeric, so documented `10.0.0.x` / `192.168.1.x` forms pass |
 | [memcheck.py](scripts/memcheck.py) | Whole-box memory picture: commit charge, memory types, per-app rollup, pagefile, GPU memory |
 | [catch_popup.py](scripts/catch_popup.py) | Sample the process table and print every newly appeared console-class process with its parent chain |
 | [watch_popups.py](scripts/watch_popups.py) | Same probe tuned for boot-time storms (run it right after login) |
@@ -139,8 +139,8 @@ Nothing needs a config file. Environment variables, with their defaults:
 |---|---|---|---|
 | `MIHOMO_PIPE` | mihomo_pipe_api.py | `\\.\pipe\verge-mihomo` | Named pipe of the control API |
 | `MIHOMO_SECRET` | mihomo_pipe_api.py | empty | Bearer secret, if the control API has one |
-| `LOCALAPPDATA` | vscode_vsix_install.py | (Windows) | Where it probes for the VS Code CLI |
-| `PORTAL_MARK` | wan_mab_watchdog.sh | `10.0.0.254` | String in the response body that means "not authenticated" |
+| `ProgramFiles`, `LOCALAPPDATA` | vscode_vsix_install.py | (Windows) | Install roots it probes for the VS Code CLI |
+| `PORTAL_MARK` | wan_mab_watchdog.sh | `192.0.2.254` | String in the response body that means "not authenticated" |
 | `PROBE_URLS` | wan_mab_watchdog.sh | `http://www.baidu.com http://www.163.com` | Real pages used as authentication probes |
 | `WAN_IF` | wan_mab_watchdog.sh | `wan` | UCI/interface name of the WAN link to bounce |
 | `LOG`, `STATE` | wan_mab_watchdog.sh | `/etc/wan_mab.log`, `/etc/wan_mab.state` | Log and state file (put them in `/etc/sysupgrade.conf` to survive firmware upgrade) |
@@ -162,8 +162,11 @@ Nothing needs a config file. Environment variables, with their defaults:
 - **Environment-specific by construction.** Every note describes one real machine, one
   router model, one portal vendor. The reasoning transfers; the exact output does not.
 - **Placeholders must be replaced.** `AA:BB:CC:DD:EE:02`, `192.168.1.x`, `10.0.0.x`,
-  `<GPU_INSTANCE_ID>`, `<口令>` are examples. Device instance IDs and GPU indexes change
-  when you move a card to another port or reinstall its driver.
+  `<盘符>` (the drive letter), `<GPU_INSTANCE_ID>`, `<口令>` are examples. Device instance IDs
+  and GPU indexes change when you move a card to another port or reinstall its driver.
+- **Example addresses are documentation ranges, not a real topology.** Where a complete
+  address is needed the notes use RFC 5737: `192.0.2.0/24` for the upstream/campus side and
+  `198.51.100.0/24` for the home LAN. They describe no network that exists.
 - **Dated behaviour.** Portal menus, LuCI page layouts and router firmware were verified on
   the versions named in each note; vendors move things around.
 - **Some procedures change system state** — crash-dump settings, power settings, UCI config,

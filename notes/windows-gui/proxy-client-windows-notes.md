@@ -9,7 +9,7 @@
 
 ---
 
-Clash Verge Rev v2.5.2（Tauri 2 + mihomo v1.19.29 内核），安装于 `C:\Program Files\Clash Verge\`，配置目录 `%APPDATA%\io.github.clash-verge-rev.clash-verge-rev\`（verge.yaml=GUI 设置、dns_config.yaml=DNS、profiles.yaml=订阅清单、clash-verge.yaml=当前生效完整配置）。本文件同时是"本机代理环境"知识库，任何工具链遇到 fake-ip/代理问题先读这里。
+Clash Verge Rev v2.5.2（Tauri 2 + mihomo v1.19.29 内核），安装于 `%ProgramFiles%\Clash Verge\`，配置目录 `%APPDATA%\io.github.clash-verge-rev.clash-verge-rev\`（verge.yaml=GUI 设置、dns_config.yaml=DNS、profiles.yaml=订阅清单、clash-verge.yaml=当前生效完整配置）。本文件同时是"本机代理环境"知识库，任何工具链遇到 fake-ip/代理问题先读这里。
 
 ## 本机关键配置（2026-08 实测）
 

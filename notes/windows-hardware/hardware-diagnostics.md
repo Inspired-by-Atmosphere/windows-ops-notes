@@ -41,7 +41,7 @@
 ## GPU/eGPU 溯源
 - nvidia-smi：`-L` 列卡；`--query-gpu=index,name,pci.bus_id,...` 看总线（内置独显 bus 01:00.0，eGPU 在 0F 等大号 bus）
 - **SUBSYS 厂商解析**：实例 ID `PCI\VEN_10DE&DEV_XXXX&SUBSYS_YYYYZZZZ` 中 ZZZZ=子系统厂商（17AA=<laptop OEM>、1458=技嘉、1B21=ASMedia）——非本机厂商 ID = 外接件
-- **setupapi.dev.log 的 Parent Device 是连接方式铁证**：`grep -i "DEV_XXXX" C:\Windows\inf\setupapi.dev.log`，附近 "Parent Device: PCI\VEN_1B21&DEV_2461" = ASM2464PD USB4/雷电 eGPU 坞（ADT-Link UT3G、天钡 AG02 类）；"Boot Session" + "Device Install" 段 = 安装时刻；"Needs Reinstall" 旧实例 = 换过接口
+- **setupapi.dev.log 的 Parent Device 是连接方式铁证**：`grep -i "DEV_XXXX" "<盘符>:\Windows\inf\setupapi.dev.log"`，附近 "Parent Device: PCI\VEN_1B21&DEV_2461" = ASM2464PD USB4/雷电 eGPU 坞（ADT-Link UT3G、天钡 AG02 类）；"Boot Session" + "Device Install" 段 = 安装时刻；"Needs Reinstall" 旧实例 = 换过接口
 - 当前走哪条路：`Get-CimInstance Win32_PnPEntity -Filter "DeviceID LIKE 'USB4%'"` 有 USB4 路由器 = 走雷电/USB4 口
 
 ## 死机/重启/蓝屏排查

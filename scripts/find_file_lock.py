@@ -98,7 +98,7 @@ def find_locks(path):
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Find Windows processes holding a file open (Restart Manager API).",
-        epilog="Example: python find_file_lock.py \"C:\\\\Users\\\\me\\\\Desktop\\\\report.pdf\"",
+        epilog="Example: python find_file_lock.py \"<drive>:\\path\\to\\report.pdf\"",
     )
     ap.add_argument("path", help="Windows path to the locked file (native form, backslashes).")
     ap.add_argument("--json", action="store_true", help="Print machine-readable JSON.")

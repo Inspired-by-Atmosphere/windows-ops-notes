@@ -109,7 +109,7 @@ Python 脚本全部只用标准库；打到 stdout，失败时退出码非零，
 
 | 脚本 | 用途 |
 |---|---|
-| [check_secrets.py](scripts/check_secrets.py) | 零依赖仓库扫描器：凭据、高熵串、内网 IP、MAC、邮箱、用户目录路径、内网主机名 |
+| [check_secrets.py](scripts/check_secrets.py) | 零依赖仓库扫描器：凭据、高熵串、内网 IP、MAC、邮箱、用户目录路径、内网主机名。内网 IP 要**四段全数字**才算命中，所以文档里的 `10.0.0.x` / `192.168.1.x` 形式一律放行 |
 | [memcheck.py](scripts/memcheck.py) | 整机内存全貌：commit 率、内存类型分解、按应用聚合、分页文件、GPU 显存 |
 | [catch_popup.py](scripts/catch_popup.py) | 采样进程表，打印每个新出现的 console 类进程及其父进程链 |
 | [watch_popups.py](scripts/watch_popups.py) | 同一个探针，针对开机闪窗洪峰调过（登录后立刻跑） |
@@ -129,8 +129,8 @@ Python 脚本全部只用标准库；打到 stdout，失败时退出码非零，
 |---|---|---|---|
 | `MIHOMO_PIPE` | mihomo_pipe_api.py | `\\.\pipe\verge-mihomo` | 控制 API 的命名管道 |
 | `MIHOMO_SECRET` | mihomo_pipe_api.py | 空 | 控制 API 的 bearer secret（若有） |
-| `LOCALAPPDATA` | vscode_vsix_install.py | （Windows） | 探测 VS Code CLI 的位置 |
-| `PORTAL_MARK` | wan_mab_watchdog.sh | `10.0.0.254` | 响应正文里出现它 = 未认证 |
+| `ProgramFiles` / `LOCALAPPDATA` | vscode_vsix_install.py | （Windows） | 探测 VS Code CLI 时用的安装根目录 |
+| `PORTAL_MARK` | wan_mab_watchdog.sh | `192.0.2.254` | 响应正文里出现它 = 未认证 |
 | `PROBE_URLS` | wan_mab_watchdog.sh | `http://www.baidu.com http://www.163.com` | 用作认证探测的真实站点 |
 | `WAN_IF` | wan_mab_watchdog.sh | `wan` | 要弹的 WAN 链路接口名 |
 | `LOG` / `STATE` | wan_mab_watchdog.sh | `/etc/wan_mab.log` / `/etc/wan_mab.state` | 日志与状态文件（要活过刷机需写进 `/etc/sysupgrade.conf`） |
@@ -150,8 +150,10 @@ Python 脚本全部只用标准库；打到 stdout，失败时退出码非零，
 ## 局限
 
 - **天生环境特定。** 每篇只描述一台真实机器、一款路由器、一家 portal 厂商。推理过程可迁移，具体输出不能。
-- **占位符必须替换。** `AA:BB:CC:DD:EE:02`、`192.168.1.x`、`10.0.0.x`、`<GPU_INSTANCE_ID>`、`<口令>`
-  都是示例。换雷电口或重装驱动后，设备的实例 ID 与 GPU 索引都会变。
+- **占位符必须替换。** `AA:BB:CC:DD:EE:02`、`192.168.1.x`、`10.0.0.x`、`<盘符>`（盘符占位）、
+  `<GPU_INSTANCE_ID>`、`<口令>` 都是示例。换雷电口或重装驱动后，设备的实例 ID 与 GPU 索引都会变。
+- **示例地址用的是文档专用段，不是真实拓扑。** 需要给完整地址的场合一律用 RFC 5737：
+  `192.0.2.0/24` 表示上游/校园网侧，`198.51.100.0/24` 表示宿舍内网。它们不代表任何真实网络。
 - **结论有时效。** Portal 菜单、LuCI 页面布局与路由器固件都按各篇标明的版本验证过，厂商会改版。
 - **部分操作会改系统状态**——崩溃转储设置、电源设置、UCI 配置、防火墙、禁用设备。先读回滚段，
   先做备份再动手。

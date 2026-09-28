@@ -17,7 +17,7 @@
 
 ## 免管理员装 MySQL（8.0 全流程已验证）
 1. 下载 zip 版（非 MSI/Installer——MySQL Installer 只到 8.0 系列且需管理员）：华为云镜像直连（见下"下载提速"）
-2. 解压到可写盘（如 D:\MySQL）
+2. 解压到可写数据盘（如 `<盘符>:\MySQL`）
 3. 写 my.ini：basedir/datadir 用**正斜杠**；utf8mb4；`default-authentication-plugin=mysql_native_password`（兼容 Navicat 等旧工具）
 4. `mysqld --defaults-file=... --initialize-insecure`（生成 data，root 空密码）
 5. 启动：`Start-Process mysqld -WindowStyle Hidden`——进程独立于父会话，父退出后存活（已验证）
@@ -31,7 +31,7 @@
 1. 打包"解压后目录"而非原始 zip（绕开对方解压环节）；zip 压缩后约减半
 2. 安装脚本前置检查：`Get-NetTCPConnection -LocalPort $Port -State Listen` 端口占用、目标目录已存在 → 拒绝并提示先卸载
 3. 交付前用**临时端口 + 临时目录**完整实测一遍，且**必须走真实入口**：`subprocess.run(['cmd','/c','一键安装.bat','-InstallDir',...,'-Port',3307,...], cwd=解压目录, stdin=DEVNULL)` 模拟双击（python subprocess 避开 MSYS 引号转换坑）。只测内部 ps1 不算数——入口层的编码、参数透传（bat 须带 `%*` 才能测试传参）、失败处理只有走真实入口才现形。**成功路径 + 失败路径都测**（失败=端口占用/目录已存在重复装，应显示 FAILED 且非零退出码，绝不假 Done）。测完先按 CommandLine 确认目标再杀测试实例，再删目录。示例数据用英文（见编码铁律）
-3b. **必须测默认参数路径**（不是临时目录）：真实用户无参数双击 → 默认 `D:\MySQL`（盘根下一级），`Split-Path` 得 `D:\` → PS 5.1 `New-Item -Path 'D:\'` 直接报「路径的形式不合法」崩溃。用临时子目录测试会绕过盘根边界（翻车实录：colleagues按默认路径装必崩，而我的测试全绿）。父目录创建一律写 `$p = Split-Path $x -Parent; if ($p -and -not (Test-Path $p)) { New-Item -ItemType Directory -Force -Path $p }`
+3b. **必须测默认参数路径**（不是临时目录）：真实用户无参数双击 → 默认 `<盘符>:\MySQL`（盘根下一级），`Split-Path` 得 `<盘符>:\` → PS 5.1 `New-Item -Path '<盘符>:\'` 直接报「路径的形式不合法」崩溃。用临时子目录测试会绕过盘根边界（翻车实录：colleagues按默认路径装必崩，而我的测试全绿）。父目录创建一律写 `$p = Split-Path $x -Parent; if ($p -and -not (Test-Path $p)) { New-Item -ItemType Directory -Force -Path $p }`
 4. 瘦身：删 `*.pdb` 调试符号（mysqld.pdb 可 300M+）、用不上的大目录（lib/mecab 日文分词、mysqlclient.lib 开发静态库）——bin 里的 dll 保留即可，客户端 `--version` 验证
 5. 交付位置：`%USERPROFILE%\Desktop\share\`（via a file-sharing service发colleagues）
 
@@ -53,7 +53,7 @@
 4. ⚠️ 该接口返回 **gzip 包装**（魔数 `1f 8b`），不是 zip → 先 `gunzip`；装前核对魔数应为 **`PK`**，拿 `1f 8b` 直接装会失败。
 5. 安装：`code --install-extension "<Windows 绝对路径>.vsix" --force`。**必须传 Windows 绝对路径**——MSYS 相对路径会被解析成 `file:///d%3A/...` 而报 `Failed Installing Extensions`。路径含空格/中文时先把 vsix 拷到无空格的临时目录再装，绕开引号坑。
 6. 复核：`code --list-extensions`（依赖扩展会一并装上）。
-7. `code` CLI 不在 PATH 时用绝对路径（本机实测 `D:\Microsoft VS Code\bin\code`）；VSCode 装在 `D:\...\<hash>\resources\app` 这类版本号目录下，找 `resources/app/out` 要先进版本号目录。
+7. `code` CLI 不在 PATH 时用绝对路径（示例：`%ProgramFiles%\Microsoft VS Code\bin\code`；装在非系统盘就换成自己的路径）；VSCode 装在 `<install>\<hash>\resources\app` 这类版本号目录下，找 `resources/app/out` 要先进版本号目录。
 
 ## Pitfalls（实踩）
 - mysql.exe 客户端**默认连 3306**——服务在别的端口必须显式 `-P <port>`，否则连到本机旧实例报 Access denied（测试 3307 时踩过）
@@ -66,6 +66,6 @@
 - **bat 包装层必须检查 `%errorlevel%`**：PowerShell 失败后 bat 不检查就照常显示 "Done" = 假成功，零基础用户会以为装好了——失败时显示 FAILED 并 `exit /b 1`（假 Done 正是"没走真实入口模拟"才漏掉的）
 - **"未解压"检测禁用路径名匹配**：`findstr /c:".zip\"`（不触发）和 `%HERE:.zip\=%` 字符串替换（**误伤**）都不可靠——Windows 解压向导会把文件放进**真实文件夹** `xxx.zip\xxx\`（目录名带 .zip 而非压缩包），路径名判定会拦住正常解压的用户。正确做法：`if not exist "%~dp0mysql-8.0.29-winx64\bin\mysqld.exe"` 文件存在性判定（事实为准），ps1 侧同样 Test-Path 程序目录兜底
 - **测试必须复现用户真实布局**：仅解压到英文空目录不够——要模拟 ①目录名含 `.zip` 的真实文件夹（Windows 解压向导典型产物）②中文文件夹名/中文用户名桌面路径，才能碰到这类误判
-- **`New-Item` 不能创建盘根**：`New-Item -ItemType Directory -Path 'D:\'` → CreateDirectoryArgumentError「路径的形式不合法」。凡"创建父目录"必须先 Test-Path 判存在（盘根永远存在→跳过）。默认安装路径（`D:\MySQL`）必然踩中，临时目录测试测不出来
+- **`New-Item` 不能创建盘根**：`New-Item -ItemType Directory -Path '<盘符>:\'` → CreateDirectoryArgumentError「路径的形式不合法」。凡"创建父目录"必须先 Test-Path 判存在（盘根永远存在→跳过）。默认安装路径（`<盘符>:\MySQL`）必然踩中，临时目录测试测不出来
 - **bat 检测"在 zip 内运行"**：`echo %~dp0|findstr /c:".zip\"` 实测不触发（findstr 字面匹配不可靠）→ 改用 cmd 字符串替换 `set "HERE=%~dp0"` + `if not "%HERE:.zip\=%"=="%HERE%" (echo 请先解压 & pause & exit /b 1)`；ps1 侧再兜一层：程序目录（`mysql-8.0.29-winx64` 等）不存在 → 提示先解压。用户"我在 zip 里直接双击了 bat"和"解压了"都出现过，两条路都要给明确提示
 - **Copy-Item 源==目标相撞**：Windows 路径大小写不敏感，测试参数/解压目录与目标路径重合时 `Copy-Item -Recurse -Force` 报"用其自身覆盖该项"——复制前 `TrimEnd('\').ToLower()` 比较，相同则跳过
