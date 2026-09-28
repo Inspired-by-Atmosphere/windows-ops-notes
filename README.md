@@ -2,6 +2,22 @@
 
 Field notes and zero-dependency scripts from real Windows / OpenWrt / campus-network troubleshooting.
 
+## What this is
+
+Problem write-ups, each self-contained and in the same shape: **symptom / trigger →
+root cause → commands → how to verify → pitfalls**. No blog filler and no dead
+ends — every note finishes with the check that proves the fix actually worked, and
+the section that lists the traps that cost the most time.
+
+```text
+notes/windows-filesystem/file-lock-hunting.md
+  When to Use · 触发场景 · 常见持有者（实测） · 排查步骤
+  · Restart Manager API 坑位 · 验证 · 相关
+```
+
+The notes themselves are written in Chinese (each one opens with an English
+`When to Use` section); the scripts and their `--help` are English.
+
 ## Why
 
 Most of what you find online for these problems is either a one-line Stack Overflow answer

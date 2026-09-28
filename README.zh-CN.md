@@ -2,6 +2,18 @@
 
 真实 Windows / OpenWrt / 校园网排障现场留下的笔记与零依赖脚本。
 
+## 这是什么
+
+一批独立的排障笔记，每篇结构一致：**现象 / 触发场景 → 根因 → 命令与步骤 → 验证方式 → 坑位**。没有水文，也没有半途而废——每篇都以"能证明真的修好了"的验证收尾，并单列最费时间的坑。
+
+```text
+notes/windows-filesystem/file-lock-hunting.md
+  When to Use · 触发场景 · 常见持有者（实测） · 排查步骤
+  · Restart Manager API 坑位 · 验证 · 相关
+```
+
+笔记正文是中文（每篇开头有一节英文 `When to Use`）；脚本与其 `--help` 是英文。
+
 ## 为什么有这份东西
 
 这类问题在网上一搜，要么是一行对不上症状的 Stack Overflow 回答，要么是假设你那个 GUI
